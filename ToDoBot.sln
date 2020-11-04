@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30225.117
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ToDoBot", "ToDoBot\ToDoBot.csproj", "{BBC7DF2A-0C17-4F94-A0F5-863D8A1BE95B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BBC7DF2A-0C17-4F94-A0F5-863D8A1BE95B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBC7DF2A-0C17-4F94-A0F5-863D8A1BE95B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBC7DF2A-0C17-4F94-A0F5-863D8A1BE95B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBC7DF2A-0C17-4F94-A0F5-863D8A1BE95B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F33634DA-5A0C-48D4-9555-70B800DA6F13}
+	EndGlobalSection
+EndGlobal
