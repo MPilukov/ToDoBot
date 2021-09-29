@@ -12,9 +12,9 @@ using ToDoBot.Services.Storage;
 
 namespace ToDoBot
 {
-    class Program
+    internal static class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             var consoleLogger = new ConsoleLogger();
 

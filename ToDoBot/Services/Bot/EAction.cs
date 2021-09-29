@@ -4,7 +4,7 @@
     {
         AddRecord,
         GetRecords,
-        SetTimeZoon,
+        SetTimeZone,
         SetNotDisturb,
         SetCheckWordsPeriod,
         UpdateRecord,

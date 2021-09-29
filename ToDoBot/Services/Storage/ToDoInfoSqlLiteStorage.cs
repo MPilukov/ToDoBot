@@ -13,7 +13,7 @@ namespace ToDoBot.Services.Storage
     public class ToDoInfoSqlLiteStorage : IInfoStorage
     {
         private readonly string _dbFilepath;
-        protected readonly ILogger _logger;
+        private readonly ILogger _logger;
 
         public ToDoInfoSqlLiteStorage(string dbFilepath, ILogger logger)
         {
@@ -28,11 +28,11 @@ namespace ToDoBot.Services.Storage
             using (var connection = new SqliteConnection($"Filename={_dbFilepath}"))
             {
                 connection.Open();
-                SqliteCommand createUsersTable = new SqliteCommand(
+                var createUsersTable = new SqliteCommand(
                     "CREATE TABLE IF NOT EXISTS Users (Id INTEGER PRIMARY KEY, Data NVARCHAR(5000))", connection);
                 createUsersTable.ExecuteNonQuery();
 
-                SqliteCommand createRecordsTable = new SqliteCommand(
+                var createRecordsTable = new SqliteCommand(
                     @"CREATE TABLE IF NOT EXISTS Records 
 (Id GUID PRIMARY KEY, UserId INTEGER, Data NVARCHAR(2000) NULL, Date DATETIME NULL, IsArchive INTEGER, ArchiveDate DATETIME NULL, Duration INTEGER)", connection);
                 createRecordsTable.ExecuteNonQuery();

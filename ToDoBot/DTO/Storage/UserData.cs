@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using ToDoBot.Services.Bot;
 
-namespace ToDoBot.Services.Bot
+namespace ToDoBot.DTO.Storage
 {
     public class UserData
     {
         public int UserId { get; set; }
         public int ChatId { get; set; }
 
-        public Dictionary<EAction, object> PreData;
-        public Stack<EAction> Actions;
+        public readonly Dictionary<EAction, object> PreData;
+        public readonly Stack<EAction> Actions;
         public int? UtcOffset { get; set; }
         public int? Period { get; set; }
         public bool FirstMessageToday { get; set; }        

@@ -92,12 +92,12 @@ namespace ToDoBot.Services.Bot
                     }
                 }
 
-                var mitutesCount = totalMinutes ?? userData.Period ?? 8880;
+                var minutesCount = totalMinutes ?? userData.Period ?? 8880;
 
                 if (userData.FirstMessageToday)
                 {
                     await _bot.SendMessage(userData.ChatId.ToString(), 
-                        $"Спрошу вас через {GetTextForMinutes(mitutesCount, false)} о том - что вы успели сделать");
+                        $"Спрошу вас через {GetTextForMinutes(minutesCount, false)} о том - что вы успели сделать");
 
 
                     var userDataToUpdate1 = await GetUserData(userData.UserId);
@@ -112,7 +112,7 @@ namespace ToDoBot.Services.Bot
                 var userDataToUpdate2 = await GetUserData(userData.UserId);
                 userDataToUpdate2.Actions.Push(EAction.AddRecord);
 
-                var question = $"Чем вы занимались {GetTextForMinutes(mitutesCount, true)} ?";
+                var question = $"Чем вы занимались {GetTextForMinutes(minutesCount, true)} ?";
 
                 var answersToday = await GetAnswers(userId);
                 if (answersToday.Any())
@@ -128,11 +128,11 @@ namespace ToDoBot.Services.Bot
                 userDataToUpdate2.LastMessageTo = dateTimeUtc;
                 if (userDataToUpdate2.PreData.ContainsKey(EAction.AddRecord))
                 {
-                    userDataToUpdate2.PreData[EAction.AddRecord] = mitutesCount;
+                    userDataToUpdate2.PreData[EAction.AddRecord] = minutesCount;
                 }
                 else
                 {
-                    userDataToUpdate2.PreData.TryAdd(EAction.AddRecord, mitutesCount);
+                    userDataToUpdate2.PreData.TryAdd(EAction.AddRecord, minutesCount);
                 }
 
                 await SaveUserData(userDataToUpdate2);
@@ -219,20 +219,22 @@ namespace ToDoBot.Services.Bot
                 }
             }
 
-            var responseList = new List<string>();
-            responseList.Add("Посмотрим на ваши результаты сегодня : ");
+            var responseList = new List<string>
+            {
+                "Посмотрим на ваши результаты сегодня : ",
+            };
             if (!dict.Any())
             {
                 responseList.Add("Ничего не делалось.");
             }
 
             var idx = 1;
-            foreach (var item in dict.OrderByDescending(x => x.Value))
+            foreach (var (key, value) in dict.OrderByDescending(x => x.Value))
             {
-                var percent = item.Value / sum * 100;
+                var percent = value / sum * 100;
                 // округление
 
-                var dataItem = $"{idx}. {item.Key} ({item.Value} : {percent.ToString("#.##")} %)";
+                var dataItem = $"{idx}. {key} ({value} : {percent:#.##} %)";
                 responseList.Add(dataItem);
 
                 idx++;
@@ -245,7 +247,7 @@ namespace ToDoBot.Services.Bot
             await GetMainMenuMessage(userData.ChatId, userData);
         }
 
-        private string GetTextForMinutes(int count, bool isLast)
+        private static string GetTextForMinutes(int count, bool isLast)
         {
             var str = count.ToString();
             if (str.EndsWith("1") && (count == 1 || count > 20))
@@ -297,10 +299,10 @@ namespace ToDoBot.Services.Bot
                     return;
                 case "вчера":
                     var date = DateTime.UtcNow.AddDays(-1);
-                    await GetInfortaion(message, userData, date);
+                    await GetInformation(message, userData, date);
                     return;
                 case "сегодня":
-                    await GetInfortaion(message, userData, null);
+                    await GetInformation(message, userData, null);
                     return;
                 case "часовой пояс":
                     await TimeZoonMenu(message, userData);
@@ -315,7 +317,7 @@ namespace ToDoBot.Services.Bot
                     await Settings(message, userData);
                     return;
                 case "что было":
-                    await GetInfortaionMenu(message, userData);
+                    await GetInformationMenu(message, userData);
                     return;
             }
 
@@ -343,8 +345,8 @@ namespace ToDoBot.Services.Bot
                 case EAction.SetCheckWordsPeriod:
                     await SetCheckWordsPeriod(message, userData);
                     return;
-                case EAction.SetTimeZoon:
-                    await SetTimeZoon(message, userData);
+                case EAction.SetTimeZone:
+                    await SetTimeZone(message, userData);
                     return;
                 case EAction.SelectRecord:
                     await SelectRecord(message, userData);
@@ -352,7 +354,8 @@ namespace ToDoBot.Services.Bot
             }
         }
 
-        private static T GetOrDefaultFromSavedData<T>(Dictionary<EAction, object> savedData, 
+        private static T GetOrDefaultFromSavedData<T>(
+            IReadOnlyDictionary<EAction, object> savedData,
             EAction action) where T : struct
         {
             var obj = savedData.TryGetValue(action, out var x) ? x : null;
@@ -418,8 +421,9 @@ namespace ToDoBot.Services.Bot
         /// Сейчас время - не беспокоить
         /// </summary>
         /// <param name="userData"></param>
+        /// <param name="dateTimeUtc"></param>
         /// <returns></returns>
-        private bool InNotDisturbPeriod(UserData userData, DateTime dateTimeUtc)
+        private static bool InNotDisturbPeriod(UserData userData, DateTime dateTimeUtc)
         {
             if (userData.From == null || userData.To == null || userData.UtcOffset == null)
             {
@@ -508,13 +512,13 @@ namespace ToDoBot.Services.Bot
             return false;
         }
 
-        private bool ValidSettings(UserData userData)
+        private static bool ValidSettings(UserData userData)
         {
             return userData?.From != null && userData?.To != null &&
                 userData?.Period != null && userData?.UtcOffset != null;
         }
 
-        private async Task GetInfortaionMenu(Message message, UserData userData)
+        private async Task GetInformationMenu(Message message, UserData userData)
         {
             if (!ValidSettings(userData))
             {
@@ -528,11 +532,11 @@ namespace ToDoBot.Services.Bot
             return;
         }
 
-        private readonly Regex DateReg = new Regex(@"[0-2]\d:[0-5]\d");
-        private readonly Regex DatePeriodReg = new Regex(@"[0-2]\d:[0-5]\d( | - |-)[0-2]\d:[0-5]\d");
+        private readonly Regex _dateReg = new Regex(@"[0-2]\d:[0-5]\d");
+        private readonly Regex _datePeriodReg = new Regex(@"[0-2]\d:[0-5]\d( | - |-)[0-2]\d:[0-5]\d");
         private async Task SetNotDisturb(Message message, UserData userData)
         {
-            var matches = DatePeriodReg.Matches(message.Text);
+            var matches = _datePeriodReg.Matches(message.Text);
             if (matches.Count == 0)
             {
                 await _bot.SendMessage(message.ChatId.ToString(), "Указано недопустимое время. Попробуйте снова");
@@ -575,7 +579,7 @@ namespace ToDoBot.Services.Bot
             await _bot.SendMessage(message.ChatId.ToString(), $"Количество минут между итерациями установлено");
         }
 
-        private async Task SelectRecord(Message message, UserData userData)
+        private static async Task SelectRecord(Message message, UserData userData)
         {
             if (userData.PreData.TryGetValue(EAction.SelectRecord, out var data))
             {
@@ -593,9 +597,9 @@ namespace ToDoBot.Services.Bot
             }
         }
 
-        private async Task SetTimeZoon(Message message, UserData userData)
+        private async Task SetTimeZone(Message message, UserData userData)
         {
-            var matches = DateReg.Matches(message.Text);
+            var matches = _dateReg.Matches(message.Text);
             if (matches.Count == 0)
             {
                 await _bot.SendMessage(message.ChatId.ToString(), "Указано недопустимое время. Попробуйте снова");
@@ -623,20 +627,20 @@ namespace ToDoBot.Services.Bot
             await _bot.SendMessage(message.ChatId.ToString(), $"Ваш часовой пояс : utc {offset}");
         }
 
-        private int GetExactlyOffset(int offsetHour, double offsetMinutes)
+        private static int GetExactlyOffset(int offsetHour, double offsetMinutes)
         {
-            var reallValue = offsetHour * 60.0;
+            var realValue = offsetHour * 60.0;
 
             var greatValue = (offsetHour + 1) * 60.0;
             var lessValue = (offsetHour - 1) * 60.0;
 
             if (Math.Abs(Math.Abs(offsetMinutes) - Math.Abs(greatValue))
-                < Math.Abs(Math.Abs(offsetMinutes) - Math.Abs(reallValue)))
+                < Math.Abs(Math.Abs(offsetMinutes) - Math.Abs(realValue)))
             {
                 return offsetHour + 1;
             }
             else if (Math.Abs(Math.Abs(offsetMinutes) - Math.Abs(lessValue))
-                < Math.Abs(Math.Abs(offsetMinutes) - Math.Abs(reallValue)))
+                < Math.Abs(Math.Abs(offsetMinutes) - Math.Abs(realValue)))
             {
                 return offsetHour - 1;
             }
@@ -655,8 +659,10 @@ namespace ToDoBot.Services.Bot
                 return;
             }
 
-            var responseList = new List<string>();
-            responseList.Add("Список записей : ");
+            var responseList = new List<string>
+            {
+                "Список записей : ",
+            };
 
             var idsList = new List<string>();
             var pairs = new Dictionary<int, Guid>();
@@ -715,7 +721,7 @@ namespace ToDoBot.Services.Bot
         private async Task TimeZoonMenu(Message message, UserData userData)
         {
             var userDataToUpdate = await GetUserData(userData.UserId);
-            userDataToUpdate.Actions.Push(EAction.SetTimeZoon);
+            userDataToUpdate.Actions.Push(EAction.SetTimeZone);
             await SaveUserData(userDataToUpdate);
 
             await _bot.SendMessage(message.ChatId.ToString(), "Введите текущее время (00:00)");
@@ -733,7 +739,7 @@ namespace ToDoBot.Services.Bot
             await _bot.CreateKeyboard(message.ChatId.ToString(),
                 "Выберите действие", new[] { "Время м/у итерациями", "Часовой пояс", "Не беспокоить", "Меню" }, false, true);
         }
-        private async Task GetInfortaion(Message message, UserData userData, DateTime? date)
+        private async Task GetInformation(Message message, UserData userData, DateTime? date)
         {
             var data = date.HasValue 
                 ? await _infoStorage.GetArchiveRecords(message.UserId, date.Value)
@@ -751,8 +757,11 @@ namespace ToDoBot.Services.Bot
                 }
             }
 
-            var responseList = new List<string>();
-            responseList.Add("Список задач : ");
+            var responseList = new List<string>
+            {
+                "Список задач : ",
+            };
+
             if (!tasks.Any())
             {
                 responseList.Add("Ничего не делалось.");
